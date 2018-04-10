@@ -5,7 +5,6 @@ class Model():
     def __init__(self, args, training=True):
     
         self.input_data = tf.placeholder(dtype=tf.int32, shape=[args.batch_size, args.seq_length])
-        self.targets = tf.placeholder(dtype=tf.int32, shape=[args.batch_size, args.seq_length])
         self.sequence_lengths = tf.placeholder(dtype=tf.int32, shape=[args.batch_size])
 
         # Embedding
@@ -43,11 +42,13 @@ class Model():
         self.logits = tf.split(tf.matmul(outputs, weights) + bias, args.batch_size, axis=0)
         self.probs = tf.nn.softmax(self.logits)
 
-        # need first to convert targets to one hot
-        self.labels = tf.one_hot(self.targets, args.vocab_size)
-        # labels will have size [batch_size, seq_length, vocab_size]
+        if training:
+            self.targets = tf.placeholder(dtype=tf.int32, shape=[args.batch_size, args.seq_length])
+            # need first to convert targets to one hot
+            self.labels = tf.one_hot(self.targets, args.vocab_size)
+            # labels will have size [batch_size, seq_length, vocab_size]
+            
+            loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.logits, labels = self.labels)
+            self.cost = tf.reduce_mean(loss)
 
-        loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.logits, labels = self.labels)
-        self.cost = tf.reduce_mean(loss)
-
-        self.optimizer = tf.train.AdamOptimizer(args.learning_rate).minimize(self.cost)
+            self.optimizer = tf.train.AdamOptimizer(args.learning_rate).minimize(self.cost)

@@ -3,7 +3,7 @@ import numpy as np
 from six.moves import cPickle as pickle
 
 class TextLoader():
-    def __init__(self, data_dir, batch_size, seq_length):
+    def __init__(self, data_dir, batch_size, seq_length, isTraining=True):
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.seq_length = seq_length
@@ -19,37 +19,47 @@ class TextLoader():
         assert os.path.exists(valid_file), "validation file does not exist"
         assert os.path.exists(test_file), "test file does not exist"
 
-        with open(vocab_file, 'rb') as fin:
-            self.vocab = pickle.load(fin)
+        with open(vocab_file, 'rb') as f:
+            self.vocab = pickle.load(f)
         
         self.vocab_size = len(self.vocab)
         # print self.vocab
 
-        train_data_file = os.path.join(self.data_dir, 'train.npy')
-        train_len_file = os.path.join(self.data_dir, 'train_len.npy')
-        valid_data_file = os.path.join(self.data_dir, 'valid.npy')
-        valid_len_file = os.path.join(self.data_dir, 'valid_len.npy')
-
-        if not (os.path.exists(train_data_file) and os.path.exists(valid_data_file)):
-            print("reading text file")
-            self.train_data, self.train_len, self.valid_data, self.valid_len = \
-            self.preprocess(train_file, valid_file, \
-            train_data_file, train_len_file, valid_data_file, valid_len_file)
-        else:
-            print("loading preprocessed files")
-            self.train_data = np.load(train_data_file)
-            self.train_len = np.load(train_len_file)
-            self.valid_data = np.load(valid_data_file)
-            self.valid_len = np.load(valid_len_file)
+        if isTraining:
+            train_data_file = os.path.join(self.data_dir, 'train.npy')
+            train_len_file = os.path.join(self.data_dir, 'train_len.npy')
+            valid_data_file = os.path.join(self.data_dir, 'valid.npy')
+            valid_len_file = os.path.join(self.data_dir, 'valid_len.npy')
+            
+            if not (os.path.exists(train_data_file) and os.path.exists(valid_data_file)):
+                print("reading text file")
+                self.train_data, self.train_len, self.valid_data, self.valid_len = \
+                self.preprocess(train_file, valid_file, \
+                train_data_file, train_len_file, valid_data_file, valid_len_file)
+            else:
+                print("loading preprocessed files")
+                self.train_data = np.load(train_data_file)
+                self.train_len = np.load(train_len_file)
+                self.valid_data = np.load(valid_data_file)
+                self.valid_len = np.load(valid_len_file)
+                
+            self.num_batches = int(len(self.train_data) / self.batch_size)
+            print("number of batches: {}".format(self.num_batches))
+            
+            self.create_batches()
+            self.reset_batch_pointer()
         
-        self.num_batches = int(len(self.train_data) / self.batch_size)
-        print("number of batches: {}".format(self.num_batches))
+        else:
+            first_char_probs_file = os.path.join(self.data_dir, 'first_char_probs.pkl')
 
-        # print(self.train_data.shape)
-        # print(self.valid_data.shape)
-
-        self.create_batches()
-        self.reset_batch_pointer()
+            if not (os.path.exists(first_char_probs_file)):
+                print("generating first char probabilities")
+                self.first_char_probs = self.generate_probs( \
+                train_file, valid_file, first_char_probs_file)
+            else:
+                print("retrieving stored probabilities")
+                with open(first_char_probs_file, 'rb') as f:
+                    self.first_char_probs = pickle.load(f)
 
     def preprocess(self, train_file, valid_file, \
         train_data_file, train_len_file, valid_data_file, valid_len_file):
@@ -102,3 +112,27 @@ class TextLoader():
     
     def reset_batch_pointer(self):
         self.pointer = 0
+
+    def generate_probs(self, train_file, valid_file, first_char_probs_file):
+        first_char_probs = {}
+        total_cnt = 0
+        with open(train_file, 'r') as f:
+            for line in f:
+                total_cnt += 1
+                first_char = line[0]
+                if first_char_probs.has_key(first_char):
+                    first_char_probs[first_char] += 1
+                else:
+                    first_char_probs[first_char] = 1
+        with open(valid_file, 'r') as f:
+            for line in f:
+                total_cnt += 1
+                first_char = line[0]
+                if first_char_probs.has_key(first_char):
+                    first_char_probs[first_char] += 1
+                else:
+                    first_char_probs[first_char] = 1
+        for k in first_char_probs.keys():
+            first_char_probs[k] = float(first_char_probs[k]) / float(total_cnt)
+        with open(first_char_probs_file, 'wb') as f:
+            pickle.dump(first_char_probs, f)

@@ -42,8 +42,8 @@ vocab_size = len(tokens)
 
 vocab = dict(zip(tokens, range(vocab_size)))
 
-with open(vocab_file, 'wb') as fout:
-	pickle.dump(vocab, fout)
+with open(vocab_file, 'wb') as f:
+	pickle.dump(vocab, f)
 
 # split into train/valid/test
 total_size = len(lines)
