@@ -30,6 +30,8 @@ def parse_args():
 	help='data directory containing input (default: preprocessed)')
 	parser.add_argument('--save_dir', type=str, default='save', \
 	help='directory to store checkpointed models (default: save)')
+    parser.add_argument('--init_from', type=str, default=None, \
+	help="checkpoint file or directory to intialize from (default: None)")
 	
 	args = parser.parse_args()
 	return args
@@ -40,18 +42,63 @@ def main():
 	args.vocab_size = loader.vocab_size
 	print("vocab_size = {}".format(args.vocab_size))
 
+	if args.init_from is not None:
+    		if os.path.isdir(args.init_from): # init from directory
+			assert os.path.exists(args.init_from), \
+			"{} is not a directory".format(args.init_from)
+			parent_dir = args.init_from
+		else: # init from file
+			assert os.path.exists("{}.index".format(args.init_from)), \
+			"{} is not a checkpoint".format(args.init_from)
+			parent_dir = os.path.dirname(args.init_from)
+
+		config_file = os.path.join(parent_dir, 'config.pkl')
+		vocab_file = os.path.join(parent_dir, 'vocab.pkl')
+
+		assert os.path.isfile(config_file), \
+		"config.pkl does not exist in directory {}".format(parent_dir)
+		assert os.path.isfile(vocab_file), \
+		"vocab.pkl does not exist in directory {}".format(parent_dir)
+
+		if os.path.isdir(args.init_from):
+			checkpoint = tf.train.latest_checkpoint(parent_dir)
+			assert checkpoint, \
+			"no checkpoint in directory {}".format(init_from)
+		else:
+			checkpoint = args.init_from
+
+		with open(os.path.join(parent_dir, 'config.pkl'), 'rb') as f:
+			saved_args = pickle.load(f)
+		with open(os.path.join(parent_dir, 'vocab.pkl'), 'rb') as f:
+			saved_vocab = pickle.load(f)
+		assert saved_vocab == loader.vocab, \
+		"vocab in data directory differs from save"
+
 	if not os.path.exists(args.save_dir):
 		os.makedirs(args.save_dir)
-	with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
-		pickle.dump(args, f)
-	with open(os.path.join(args.save_dir, 'vocab.pkl'), 'wb') as f:
-		pickle.dump(loader.vocab, f)
+
+	new_config_file = os.path.join(args.save_dir, 'config.pkl')
+	new_vocab_file = os.path.join(args.save_dir, 'vocab.pkl')
+
+	if not os.path.exists(new_config_file):
+		with open(new_config_file, 'wb') as f:
+			pickle.dump(args, f)
+	if not os.path.exists(new_vocab_file):
+		with open(new_vocab_file, 'wb') as f:
+			pickle.dump(loader.vocab, f)
 	
 	model = Model(args)
 
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
 		saver = tf.train.Saver(tf.global_variables())
+
+		if args.init_from is not None:
+			try:
+				saver.restore(sess, checkpoint)
+			except ValueError:
+				print("{} is not a valid checkpoint".format(checkpoint))
+			print("initializing from {}".format(checkpoint))
 
 		for e in range(args.num_epochs):
 			loader.reset_batch_pointer()

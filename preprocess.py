@@ -1,4 +1,5 @@
 import argparse
+import time
 import os
 import numpy as np
 import collections
@@ -22,6 +23,8 @@ valid_file = os.path.join(args.output_dir, 'valid.txt')
 test_file = os.path.join(args.output_dir, 'test.txt')
 
 lines = []
+
+start = time.time()
 
 # skip passwords longer than 12 chars
 with open(args.input_file, 'r') as f:
@@ -64,7 +67,9 @@ with open(valid_file, 'w') as f:
 with open(test_file, 'w') as f:
 	f.writelines(test_lines)
 
+end = time.time()
+
 if args.verbose:
-    print("preprocess done")
+    print("preprocess done; time taken: {}".format(end - start))
     print("vocab size: {}, total size: {}, train size: {}, validation size: {}, test size {}".format(vocab_size, total_size, train_size, valid_size, test_size))
     print("vocab and frequency rank: {}".format(vocab))

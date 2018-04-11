@@ -1,3 +1,4 @@
+import time
 import os
 import numpy as np
 from six.moves import cPickle as pickle
@@ -65,6 +66,8 @@ class TextLoader():
         train_data_file, train_len_file, valid_data_file, valid_len_file):
         train_data = []
         train_len = []
+        print("processing training data")
+        start = time.time()
         with open(train_file, 'r') as f:
             for line in f:
                 line = line[:-1]
@@ -76,10 +79,13 @@ class TextLoader():
         train_len = np.array(train_len)
         np.save(train_data_file, train_data)
         np.save(train_len_file, train_len)
-        print("stored train data")
+        end = time.time()
+        print("stored train data; total time taken: {}".format(end - start))
 
         valid_data = []
         valid_len = []
+        print("processing validation data")
+        start = time.time()
         with open(valid_file, 'r') as f:
             for line in f:
                 line = line[:-1]
@@ -91,7 +97,8 @@ class TextLoader():
         valid_len = np.array(valid_len)
         np.save(valid_data_file, valid_data)
         np.save(valid_len_file, valid_len)
-        print("stored valid data")
+        end = time.time()
+        print("stored validation data; total time taken: {}".format(end - start))
         return train_data, train_len, valid_data, valid_len
     
     def create_batches(self):

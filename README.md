@@ -27,3 +27,11 @@ Sample all passwords with possibility above threshold:
 $ python sample.py [--threshold <threshold>]
 ```
 
+
+
+Evaluate how well your model performed: 
+
+```sh
+$ python eval.py <results_file> <test_data_file>
+```
+
