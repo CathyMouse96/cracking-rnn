@@ -58,9 +58,6 @@ def main():
 			for b in range(loader.num_batches):
 				start = time.time()
 				x, y, length = loader.next_batch()
-				print x[0]
-				print y[0]
-				print length[0]
 				feed = {
 					model.input_data: x,
 					model.targets: y,

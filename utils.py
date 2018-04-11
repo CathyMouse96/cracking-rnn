@@ -101,9 +101,9 @@ class TextLoader():
         y_batches[:, :, : -1] = x_batches[:, :, 1 : ]
         length_batches = self.train_len[:self.num_batches * self.batch_size]
         length_batches = np.array(np.split(length_batches, self.num_batches))
-        for y_batch, y_batch_ind in y_batches, range(y_batches):
-            for y_seq, y_seq_ind in y_batch, range(y_batch):
-                y_seq[length_batches[y_batch_ind][y_seq_ind]] = 1
+        for y_batch_ind in range(len(y_batches)):
+            for y_seq_ind in range(len(y_batches[y_batch_ind])):
+                y_batches[y_batch_ind][y_seq_ind][length_batches[y_batch_ind][y_seq_ind] - 1] = 1 # TODO: Why - 1?
         self.x_batches = x_batches
         self.y_batches = y_batches
         self.length_batches = length_batches
