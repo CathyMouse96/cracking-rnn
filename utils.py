@@ -78,20 +78,20 @@ class TextLoader():
         np.save(train_len_file, train_len)
         print("stored train data")
 
-        valid_data = []
-        valid_len = []
-        with open(valid_file, 'r') as f:
-            for line in f:
-                line = line[:-1]
-                valid_len.append(len(line))
-                line = np.array(map(self.vocab.get, line))
-                line = np.pad(line, (0, self.seq_length - len(line)), 'constant')
-                valid_data.append(line)
-        valid_data = np.array(valid_data)
-        valid_len = np.array(valid_len)
-        np.save(valid_data_file, valid_data)
-        np.save(valid_len_file, valid_len)
-        print("stored valid data")
+        # valid_data = []
+        # valid_len = []
+        # with open(valid_file, 'r') as f:
+        #     for line in f:
+        #         line = line[:-1]
+        #         valid_len.append(len(line))
+        #         line = np.array(map(self.vocab.get, line))
+        #         line = np.pad(line, (0, self.seq_length - len(line)), 'constant')
+        #         valid_data.append(line)
+        # valid_data = np.array(valid_data)
+        # valid_len = np.array(valid_len)
+        # np.save(valid_data_file, valid_data)
+        # np.save(valid_len_file, valid_len)
+        # print("stored valid data")
         return train_data, train_len, valid_data, valid_len
     
     def create_batches(self):
@@ -101,9 +101,6 @@ class TextLoader():
         y_batches[:, :, : -1] = x_batches[:, :, 1 : ]
         length_batches = self.train_len[:self.num_batches * self.batch_size]
         length_batches = np.array(np.split(length_batches, self.num_batches))
-        for y_batch_ind in range(len(y_batches)):
-            for y_seq_ind in range(len(y_batches[y_batch_ind])):
-                y_batches[y_batch_ind][y_seq_ind][length_batches[y_batch_ind][y_seq_ind] - 1] = 1 # TODO: Why - 1?
         self.x_batches = x_batches
         self.y_batches = y_batches
         self.length_batches = length_batches

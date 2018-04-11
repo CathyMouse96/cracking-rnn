@@ -40,8 +40,7 @@ counts = sorted(counter.items(), key=lambda x: -x[1])
 tokens, _ = zip(*counts)
 vocab_size = len(tokens)
 
-vocab = dict(zip(tokens, range(1, vocab_size + 1)))
-# L('\n') = 1, leave index 0 for padding
+vocab = dict(zip(tokens, range(vocab_size)))
 
 with open(vocab_file, 'wb') as f:
 	pickle.dump(vocab, f)

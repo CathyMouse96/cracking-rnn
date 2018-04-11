@@ -16,6 +16,8 @@ def parse_args():
 	help='threshold for generating passwords (default: 10e-6)')
 	parser.add_argument('--min_length', type=int, default='6', \
 	help='minimum length of passwords to output (default: 6)')
+	parser.add_argument('--max_length', type=int, default='12', \
+	help='maximum length of passwords to output (default: 12)')
         parser.add_argument('--output_file', type=str, default='output.txt', \
         help='file to store sampled passwords')
 	args = parser.parse_args()
@@ -71,7 +73,7 @@ def main():
 				}
 				probs = sess.run([model.probs], feed)
 				probs = np.reshape(probs, (-1, saved_args.vocab_size))
-				next_char_prob = probs[length]
+				next_char_prob = probs[length - 1]
 				for c in charset:
     					result_prob = lut[current_prefix] * next_char_prob[vocab[c]]
 					result_str = current_prefix + c
@@ -80,8 +82,11 @@ def main():
     							if len(result_str) >= args.min_length:
     								results.append(result_str)
 						else:
-    							prefixes.append(result_str)
-							lut[result_str] = result_prob
+    							if len(result_str) > args.max_length:
+    								continue
+							else:
+    								prefixes.append(result_str)
+								lut[result_str] = result_prob
 				# end = time.time()
 				# print("sampled with prefix {}, time elapsed = {}".format(current_prefix, end - start))
 	with open(args.output_file, 'w') as f:
