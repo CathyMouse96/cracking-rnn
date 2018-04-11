@@ -5,7 +5,7 @@ import collections
 from six.moves import cPickle as pickle
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_file', type=str, default='data/rockyou/rockyou.txt', help='input file in UTF-8')
+parser.add_argument('--input_file', type=str, default='data/rockyou/input.txt', help='input file in UTF-8')
 parser.add_argument('--output_dir', type=str, default='preprocessed', help='output directory for preprocessed files')
 parser.add_argument('--valid_frac', type=float, default='0.1', help='fraction of data to use as validation set (default: 0.1)')
 parser.add_argument('--test_frac', type=float, default='0.2', help='fraction of data to use as test set (default: 0.2)')
@@ -40,7 +40,8 @@ counts = sorted(counter.items(), key=lambda x: -x[1])
 tokens, _ = zip(*counts)
 vocab_size = len(tokens)
 
-vocab = dict(zip(tokens, range(vocab_size)))
+vocab = dict(zip(tokens, range(1, vocab_size + 1)))
+# L('\n') = 1, leave index 0 for padding
 
 with open(vocab_file, 'wb') as f:
 	pickle.dump(vocab, f)

@@ -23,7 +23,7 @@ class TextLoader():
             self.vocab = pickle.load(f)
         
         self.vocab_size = len(self.vocab)
-        # print self.vocab
+        print self.vocab
 
         if isTraining:
             train_data_file = os.path.join(self.data_dir, 'train.npy')
@@ -67,6 +67,7 @@ class TextLoader():
         train_len = []
         with open(train_file, 'r') as f:
             for line in f:
+                line = line[:-1]
                 train_len.append(len(line))
                 line = np.array(map(self.vocab.get, line))
                 line = np.pad(line, (0, self.seq_length - len(line)), 'constant')
@@ -81,6 +82,7 @@ class TextLoader():
         valid_len = []
         with open(valid_file, 'r') as f:
             for line in f:
+                line = line[:-1]
                 valid_len.append(len(line))
                 line = np.array(map(self.vocab.get, line))
                 line = np.pad(line, (0, self.seq_length - len(line)), 'constant')
@@ -95,11 +97,13 @@ class TextLoader():
     def create_batches(self):
         x_batches = self.train_data[:self.num_batches * self.batch_size, :]
         x_batches = np.array(np.split(x_batches, self.num_batches, axis=0))
-        y_batches = np.copy(x_batches)
+        y_batches = np.zeros(x_batches.shape)
         y_batches[:, :, : -1] = x_batches[:, :, 1 : ]
-        y_batches[:, :, -1] = x_batches[:, :, 0]
         length_batches = self.train_len[:self.num_batches * self.batch_size]
         length_batches = np.array(np.split(length_batches, self.num_batches))
+        for y_batch, y_batch_ind in y_batches, range(y_batches):
+            for y_seq, y_seq_ind in y_batch, range(y_batch):
+                y_seq[length_batches[y_batch_ind][y_seq_ind]] = 1
         self.x_batches = x_batches
         self.y_batches = y_batches
         self.length_batches = length_batches
@@ -136,3 +140,4 @@ class TextLoader():
             first_char_probs[k] = float(first_char_probs[k]) / float(total_cnt)
         with open(first_char_probs_file, 'wb') as f:
             pickle.dump(first_char_probs, f)
+	return first_char_probs

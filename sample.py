@@ -60,7 +60,7 @@ def main():
 			# Iterate all possible passwords probability more than threshold
 			while prefixes: # while not empty
 				current_prefix = prefixes.pop()
-				start = time.time()
+				# start = time.time()
 				length = len(current_prefix)
 				line = np.array(map(vocab.get, current_prefix))
 				line = np.pad(line, (0, saved_args.seq_length - len(line)), 'constant')
@@ -82,9 +82,9 @@ def main():
 						else:
     							prefixes.append(result_str)
 							lut[result_str] = result_prob
-				end = time.time()
-				print("sampled with prefix {}, time elapsed = {}".format(current_prefix, end - start))
-	with open(output_file, 'w') as f:
+				# end = time.time()
+				# print("sampled with prefix {}, time elapsed = {}".format(current_prefix, end - start))
+	with open(args.output_file, 'w') as f:
 		f.writelines(results)
 
 if __name__ == '__main__':
