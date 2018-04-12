@@ -50,8 +50,9 @@ def main():
 			else:
 				prefixes.append(c)
 				lut[c] = first_char_probs[c]
-	
+
 	print prefixes
+	total_start = time.time()
 
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -91,6 +92,8 @@ def main():
 				# print("sampled with prefix {}, time elapsed = {}".format(current_prefix, end - start))
 	with open(args.output_file, 'w') as f:
 		f.writelines(results)
+	total_end = time.time()
+	print("Generated {} samples; total time taken = {}".format(len(results), total_end - total_start))
 
 if __name__ == '__main__':
 	main()
