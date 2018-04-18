@@ -14,7 +14,10 @@ class Model():
     
         # Build RNN cell
         encoder_cell_fn = tf.nn.rnn_cell.BasicLSTMCell
-        encoder_cell = encoder_cell_fn(args.rnn_size)
+        encoder_cells = []
+        for _ in range(args.num_layers):
+		encoder_cells.append(encoder_cell_fn(args.rnn_size))
+        encoder_cell = tf.nn.rnn_cell.MultiRNNCell(encoder_cells)
 
         encoder_initial_state = encoder_cell.zero_state(args.batch_size, tf.float32)
 

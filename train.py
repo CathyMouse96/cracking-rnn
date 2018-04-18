@@ -26,11 +26,13 @@ def parse_args():
 	help='display frequency (default: 100)')
 	parser.add_argument('--rnn_size', type=int, default=128, \
 	help='size of RNN hidden state (default: 128)')
-	parser.add_argument('--data_dir', type=str, default='preprocessed', 
+	parser.add_argument('--num_layers', type=int, default=1, \
+	help='number of layers in the RNN (default: 1)')
+	parser.add_argument('--data_dir', type=str, default='preprocessed', \
 	help='data directory containing input (default: preprocessed)')
 	parser.add_argument('--save_dir', type=str, default='save', \
 	help='directory to store checkpointed models (default: save)')
-    parser.add_argument('--init_from', type=str, default=None, \
+	parser.add_argument('--init_from', type=str, default=None, \
 	help="checkpoint file or directory to intialize from (default: None)")
 	
 	args = parser.parse_args()
