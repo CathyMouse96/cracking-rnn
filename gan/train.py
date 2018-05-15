@@ -126,8 +126,8 @@ def main():
 				end = time.time()
 
 				if global_step % args.display_every == 0 and global_step != 0:
-					print("{}/{} (epoch {}), disc_cost = {:.3f}, time/batch = {:.3f}" \
-					.format(b, loader.num_batches, e, disc_cost, end - start))
+					print("{}/{} (epoch {}), gen_cost = {:.3f}, disc_cost = {:.3f}, time/batch = {:.3f}" \
+					.format(b, loader.num_batches, e, gen_cost, disc_cost, end - start))
 				if global_step % args.save_every == 0 and global_step != 0:
 					checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
 					saver.save(sess, checkpoint_path, global_step=global_step)
