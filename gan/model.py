@@ -9,7 +9,8 @@ class Model():
 		self.sequence_lengths = tf.placeholder(tf.int32, shape=[self.args.batch_size])
 		sequence_lengths = self.sequence_lengths
 
-		self.real_inputs_discrete = tf.placeholder(tf.int32, shape=[self.args.batch_size, self.args.seq_length])
+		self.real_inputs_discrete = tf.placeholder(tf.int32, 
+			shape=[self.args.batch_size, self.args.seq_length])
 		real_inputs_discrete = self.real_inputs_discrete
 		real_inputs = tf.one_hot(real_inputs_discrete, self.args.vocab_size)
 		with tf.variable_scope("Generator"):
@@ -63,6 +64,11 @@ class Model():
 		# Run Static RNN
 		outputs, _ = tf.nn.static_rnn(cell, inputs, initial_state=None, dtype=tf.float32)
 
+		# Stack outputs into 3D tensor
+		outputs = tf.stack(outputs, axis=0)
+		# Outputs are time-majored. Transpose outputs to batch-majored
+		outputs = tf.transpose(outputs, [1, 0, 2])
+
 		# Perform softmax at output
 		weights = tf.get_variable("weights", [self.args.rnn_size, self.args.vocab_size])
 		bias = tf.get_variable("bias", [self.args.vocab_size])
@@ -90,8 +96,8 @@ class Model():
 		h_state = state[1]
 
 		# Perform binary logistic regression at output
-		weights = tf.get_variable("weights", [self.args.rnn_size, 2])
-		bias = tf.get_variable("bias", [2])
+		weights = tf.get_variable("weights", [self.args.rnn_size, 1], initializer=tf.random_normal_initializer)
+		bias = tf.get_variable("bias", [1])
 
 		logits = tf.matmul(h_state, weights) + bias
 		output = tf.nn.sigmoid(logits)

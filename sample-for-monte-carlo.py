@@ -61,6 +61,7 @@ def main():
 		ckpt = tf.train.get_checkpoint_state(args.save_dir)
         	if ckpt and ckpt.model_checkpoint_path:
 			saver.restore(sess, ckpt.model_checkpoint_path)
+		start = time.time()
 		while results_len < args.sample_size:
 			# Pick first letter according to probability
 			first_char = np.random.choice(first_char_probs.keys(), p = first_char_probs.values())
@@ -96,39 +97,9 @@ def main():
 			results.append(str(result_prob) + '\n')
 			results_len += 1
 			if results_len % args.display_every == 0:
-				print("Progress: {}/{}".format(results_len, args.sample_size))
-		"""
-		while results_len < args.sample_size: # doesn't have enough samples
-			# Retrieve prefix with highest probability
-			current_prefix = max(lut.iterkeys(), key=(lambda key: lut[key]))
-			length = len(current_prefix)
-
-			if current_prefix.endswith("\n"): # will not have following characters
-				# Add to results if satisfy condition
-				if length in range(args.min_length, args.max_length):
-					results.append(current_prefix)
-					results_len += 1
-					print str(lut[current_prefix]) + '\t' + current_prefix
-				del lut[current_prefix]
-				continue
-
-			# Get next possible characters' probabilities by NN
-			line = np.array(map(vocab.get, current_prefix))
-			line = np.pad(line, (0, saved_args.seq_length - len(line)), 'constant')
-			feed = {
-				model.input_data: [line],
-				model.sequence_lengths: [length]
-			}
-			probs = sess.run([model.probs], feed)
-			probs = np.reshape(probs, (-1, saved_args.vocab_size))
-			next_char_prob = probs[length - 1]
-			for c in charset:
-				result_prob = lut[current_prefix] * next_char_prob[vocab[c]]
-				result_str = current_prefix + c
-				lut[result_str] = result_prob
-
-			del lut[current_prefix]
-		"""
+				end = time.time()
+				print("Progress: {}/{}; time taken = {}".format(results_len, args.sample_size, end - start))
+				start = time.time()
 
 	with open(args.output_file, 'w') as f:
 		f.writelines(results)
