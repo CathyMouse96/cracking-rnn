@@ -14,8 +14,8 @@ def parse_args():
 	help='model directory to store checkpointed models')
 	parser.add_argument('--threshold', type=float, default='0.000001', \
 	help='threshold for generating passwords (default: 10e-6)')
-	parser.add_argument('--min_length', type=int, default='6', \
-	help='minimum length of passwords to output (default: 6)')
+	parser.add_argument('--min_length', type=int, default='5', \
+	help='minimum length of passwords to output (default: 5)')
 	parser.add_argument('--max_length', type=int, default='12', \
 	help='maximum length of passwords to output (default: 12)')
         parser.add_argument('--output_file', type=str, default='output.txt', \
@@ -80,7 +80,7 @@ def main():
 					result_str = current_prefix + c
 					if result_prob > args.threshold:
     						if vocab[c] == 0:
-    							if len(result_str) >= args.min_length:
+    							if len(result_str) - 1 >= args.min_length:
     								results.append(result_str)
 						else:
     							if len(result_str) > args.max_length:

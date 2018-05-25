@@ -105,29 +105,33 @@ def main():
 		for e in range(args.num_epochs):
 			loader.reset_batch_pointer()
 			for b in range(loader.num_batches):
-    				global_step = e * loader.num_batches + b
-				start = time.time()
-				x, _, length = loader.next_batch()
-				gen_feed = {
-					model.sequence_lengths: length
-				}
 
-				# Train generator
-				if global_step != 0:
-					gen_cost, _ = sess.run([model.gen_cost, model.gen_train_op], gen_feed)
+				start = time.time()
+				
+				x, _, length = loader.next_batch()
 
 				# Train critic
-				for i in xrange(5): # How many critic iterations per generator iteration.
+				for i in xrange(1): # How many critic iterations per generator iteration.
 					disc_feed = {
 						model.real_inputs_discrete: x,
 						model.sequence_lengths: length
 					}
 					disc_cost, _ = sess.run([model.disc_cost, model.disc_train_op], disc_feed)
+
+				# Train generator
+				gen_feed = {
+					model.sequence_lengths: length
+				}
+				gen_cost, _ = sess.run([model.gen_cost, model.gen_train_op], gen_feed)
+
 				end = time.time()
+
+				global_step = e * loader.num_batches + b
 
 				if global_step % args.display_every == 0 and global_step != 0:
 					print("{}/{} (epoch {}), gen_cost = {:.3f}, disc_cost = {:.3f}, time/batch = {:.3f}" \
 					.format(b, loader.num_batches, e, gen_cost, disc_cost, end - start))
+
 				if global_step % args.save_every == 0 and global_step != 0:
 					checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
 					saver.save(sess, checkpoint_path, global_step=global_step)
