@@ -6,21 +6,20 @@ import tensorflow as tf
 class Model():
 	def __init__(self, args, training=True):
 		self.args = args
-		self.sequence_lengths = tf.placeholder(tf.int32, shape=[self.args.batch_size])
-		sequence_lengths = self.sequence_lengths
 
 		self.real_inputs_discrete = tf.placeholder(tf.int32, 
 			shape=[self.args.batch_size, self.args.seq_length])
 		real_inputs_discrete = self.real_inputs_discrete
 		real_inputs = tf.one_hot(real_inputs_discrete, self.args.vocab_size)
 		with tf.variable_scope("Generator"):
-			fake_inputs = self.Generator(sequence_lengths)
+			fake_inputs = self.Generator()
 		fake_inputs_discrete = tf.argmax(fake_inputs, fake_inputs.get_shape().ndims - 1)
+		self.fake_inputs_discrete = fake_inputs_discrete
 
 		with tf.variable_scope("Discriminator"):
-			disc_real = self.Discriminator(real_inputs, sequence_lengths)
+			disc_real = self.Discriminator(real_inputs)
 		with tf.variable_scope("Discriminator", reuse=True):
-			disc_fake = self.Discriminator(fake_inputs, sequence_lengths)
+			disc_fake = self.Discriminator(fake_inputs)
 
 		disc_cost = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
 		gen_cost = -tf.reduce_mean(disc_fake)
@@ -31,7 +30,7 @@ class Model():
 		differences = fake_inputs - real_inputs
 		interpolates = real_inputs + (alpha * differences)
 		with tf.variable_scope("Discriminator", reuse=True):
-			gradients = tf.gradients(self.Discriminator(interpolates, sequence_lengths), [interpolates])[0]
+			gradients = tf.gradients(self.Discriminator(interpolates), [interpolates])[0]
 		slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1, 2]))
 		gradient_penalty = tf.reduce_mean((slopes-1.)**2)
 		disc_cost += 10 * gradient_penalty # Gradient penalty lambda hyperparameter.
@@ -47,7 +46,7 @@ class Model():
 	def make_noise(self, shape):
 		return tf.random_normal(shape)
 
-	def Generator(self, sequence_lengths):
+	def Generator(self):
 		inputs = self.make_noise(shape=[self.args.seq_length, self.args.batch_size, self.args.rnn_size])
 		# Unstack inputs into list of 2D tensors
 		inputs = tf.unstack(inputs, axis=0)
@@ -79,7 +78,7 @@ class Model():
 
 		return probs
 
-	def Discriminator(self, inputs, sequence_lengths):
+	def Discriminator(self, inputs):
     		# Inputs are batch-majored. Transpose inputs to time-majored
 		inputs = tf.transpose(inputs, [1, 0, 2])
 		# Unstack inputs into list of 2D tensors

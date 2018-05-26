@@ -113,16 +113,12 @@ def main():
 				# Train critic
 				for i in xrange(1): # How many critic iterations per generator iteration.
 					disc_feed = {
-						model.real_inputs_discrete: x,
-						model.sequence_lengths: length
+						model.real_inputs_discrete: x
 					}
 					disc_cost, _ = sess.run([model.disc_cost, model.disc_train_op], disc_feed)
 
 				# Train generator
-				gen_feed = {
-					model.sequence_lengths: length
-				}
-				gen_cost, _ = sess.run([model.gen_cost, model.gen_train_op], gen_feed)
+				gen_cost, _ = sess.run([model.gen_cost, model.gen_train_op])
 
 				end = time.time()
 
