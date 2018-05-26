@@ -14,8 +14,8 @@ def parse_args():
 	help='model directory to store checkpointed models')
         parser.add_argument('--test_file', type=str, default='preprocessed/test.txt', \
         help='file containing test set of passwords')
-        parser.add_argument('--output_file', type=str, default='testprobs.txt', \
-        help='file to store sampled passwords')
+        parser.add_argument('--output_file', type=str, default='testprobs/testprobs.txt', \
+        help='file to store probabilities of passwords in test set')
 	parser.add_argument('--save_every', type=int, default=5000, \
 	help='save frequency (default: 5000)')
 	parser.add_argument('--display_every', type=int, default=500, \
@@ -62,7 +62,9 @@ def main():
 
         total_start = time.time()
 
-        with tf.Session() as sess:
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        with tf.Session(config=config) as sess:
                 sess.run(tf.global_variables_initializer())
                 saver = tf.train.Saver(tf.global_variables())
                 ckpt = tf.train.get_checkpoint_state(args.save_dir)
