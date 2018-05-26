@@ -20,8 +20,8 @@ def parse_args():
 	help='save frequency (default: 5000)')
 	parser.add_argument('--display_every', type=int, default=500, \
         help='display frequency (default: 500)')
-	parser.add_argument('--init_from', type=bool, default=False, \
-	help="initialize lut with stored values (default: False)")
+	parser.add_argument('--init_from', type=int, default=None, \
+	help="initialize with stored value and begin at this index (default: None)")
         parser.add_argument('--early_exit', type=int, default=None, \
         help='exit after assigning probabilities to this many passwords (default: None)')
 	args = parser.parse_args()
@@ -42,6 +42,7 @@ def main():
 	testset_len = len(testset)
 
 	lut = {}
+	next_char_probs = {}
 
         vocab = loader.vocab
         charset = vocab.keys()
@@ -67,14 +68,28 @@ def main():
                 ckpt = tf.train.get_checkpoint_state(args.save_dir)
                 if ckpt and ckpt.model_checkpoint_path:
                         saver.restore(sess, ckpt.model_checkpoint_path)
-		if args.init_from:
+
+		begin_index = 0
+		if args.init_from != None:
 			lut_file = os.path.join(args.save_dir, 'lut.pkl')
 			with open(lut_file, 'rb') as f:
 				lut = pickle.load(f)
+			next_char_probs_file = os.path.join(args.save_dir, 'next_char_probs.pkl')
+                        with open(next_char_probs_file, 'rb') as f:
+                                next_char_probs = pickle.load(f)
 			print("lut initialized from {}".format(lut_file))
+			print("next_char_probs initialized from {}".format(next_char_probs_file))
+
+			partial_results_file = args.output_file + "-" + str(args.init_from)
+			with open(partial_results_file, 'r') as f:
+				results = f.readlines()
+			assert len(results) == args.init_from, "Unexpected error!"
+			results_len = len(results)
+
+			begin_index = args.init_from
 
 		start = time.time()
-		for testline in testset:
+		for testline in testset[begin_index:]:
 			result_prob = 0.0
 			# print "testline: " + testline
 			# Find probability for existing prefix
@@ -86,17 +101,24 @@ def main():
 				result_prob = lut[current_prefix]
 				# Find probability for the rest of the string
 				for m in range(k):
-					length = len(current_prefix)
-					# Get next possible characters' probabilities by NN
-                                	line = np.array(map(vocab.get, current_prefix))
-                                	line = np.pad(line, (0, saved_args.seq_length - len(line)), 'constant')
-                                	feed = {
-                                        	model.input_data: [line],
-                                        	model.sequence_lengths: [length]
-                                	}
-                                	probs = sess.run([model.probs], feed)
-                                	probs = np.reshape(probs, (-1, saved_args.vocab_size))
-                                	next_char_prob = probs[length - 1]
+    					# Try to get next possible characters' probabilities from dict
+					if next_char_probs.has_key(current_prefix):
+						# print "Found next char prob of <" + current_prefix + "> in dict!"
+						next_char_prob = next_char_probs[current_prefix]
+					# Otherwise get next possible characters' probabilities by NN
+					else:
+						length = len(current_prefix)
+                                		line = np.array(map(vocab.get, current_prefix))
+                                		line = np.pad(line, (0, saved_args.seq_length - len(line)), 'constant')
+                                		feed = {
+                                        		model.input_data: [line],
+                                        		model.sequence_lengths: [length]
+                                		}
+                                		probs = sess.run([model.probs], feed)
+                                		probs = np.reshape(probs, (-1, saved_args.vocab_size))
+                                		next_char_prob = probs[length - 1]
+						# Add next possible characters' probabilities to dict
+						next_char_probs[current_prefix] = next_char_prob
 
 					next_char = testline[-k+m]
 					current_prefix += next_char
@@ -115,7 +137,19 @@ def main():
 				lut_file = os.path.join(args.save_dir, 'lut.pkl')
 				with open(lut_file, 'wb') as f:
 					pickle.dump(lut, f)
+				next_char_probs_file = os.path.join(args.save_dir, 'next_char_probs.pkl')
+				with open(next_char_probs_file, 'wb') as f:
+					pickle.dump(next_char_probs, f)
 				print("lut saved to {}".format(lut_file))
+				print("next_char_probs saved to {}".format(next_char_probs_file))
+
+				partial_results_file = args.output_file + "-" + str(len(results))
+				with open(partial_results_file, 'w') as f:
+                			f.writelines(results)
+				end = time.time()
+				print("Written partial results to {}; time taken = {}".format(partial_results_file, end - start))
+				start = time.time()
+
 			if args.early_exit != None and results_len >= args.early_exit:
 				break
 
