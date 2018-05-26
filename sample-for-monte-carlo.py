@@ -55,8 +55,8 @@ def main():
 
 	total_start = time.time()
 
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
+	config = tf.ConfigProto()
+	config.gpu_options.allow_growth = True
 	with tf.Session(config=config) as sess:
 		sess.run(tf.global_variables_initializer())
 		saver = tf.train.Saver(tf.global_variables())
