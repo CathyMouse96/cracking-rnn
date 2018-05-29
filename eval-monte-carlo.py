@@ -18,7 +18,8 @@ def main():
 			totalcnt += 1
 			if int(line) <= args.threshold:
 				cnt += 1
-	print("Guessed percentage = {}/{}".format(cnt, totalcnt))
+	print("Guessed percentage: {}/{} = {}%".format(cnt, totalcnt, 100 * float(cnt) / float(totalcnt)))
+
 
 if __name__ == '__main__':
         main()

@@ -14,10 +14,6 @@ def parse_args():
 	help='model directory to store checkpointed models')
 	parser.add_argument('--sample_size', type=float, default='10000', \
 	help='size of password sample (default: 10000)')
-	parser.add_argument('--min_length', type=int, default='6', \
-	help='minimum length of passwords to output (default: 6)')
-	parser.add_argument('--max_length', type=int, default='12', \
-	help='maximum length of passwords to output (default: 12)')
         parser.add_argument('--output_file', type=str, default='sampleprobs.txt', \
         help='file to store sampled passwords')
 	parser.add_argument('--display_every', type=int, default=500, \
